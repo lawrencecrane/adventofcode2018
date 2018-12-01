@@ -47,8 +47,7 @@ fn resulting_frequency(lines: std::str::Lines) -> i32 {
 }
 
 fn parse_signed_string(x: &str) -> i32 {
-    let y: String = x.chars().skip_while(|&c| c == '+').collect();
-    let y: i32 = match y.parse() {
+    let y: i32 = match x.parse() {
         Ok(n) => n,
         Err(_) => 0
     };
