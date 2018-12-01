@@ -13,26 +13,29 @@ fn main() {
     let buffer = buffer;
 
     println!("Resulting frequency: {}", resulting_frequency(buffer.lines()));
-    println!("First duplicate frequency: {}", first_duplicate_frequency(buffer.lines()));
+    println!("First duplicate frequency: {}", first_duplicate_frequency(buffer.lines()).expect(""));
 }
 
-fn first_duplicate_frequency(lines: std::str::Lines) -> i32 {
-    // create infinite repetition of the buffer:
-    let inf_lines = lines.cycle();
-    // create a set to store seen frequencies:
-    let mut seen_frequencies = HashSet::new();
+fn first_duplicate_frequency(lines: std::str::Lines) -> Result<i32, &'static str> {
+    // create a infinite list with incremental sums:
+    let incremental_sums = lines.map(parse_signed_string)
+        .cycle()
+        .scan(0, |state, x| {
+            *state = *state + x;
+            Some(*state)
+        });
 
-    let mut sum = 0;
-    seen_frequencies.insert(0);
+    // create a set to store seen sums:
+    let mut seen_sums = HashSet::new();
+    seen_sums.insert(0);
 
-    for number in inf_lines {
-        sum += parse_signed_string(number);
-        if seen_frequencies.contains(&sum) { break; }
+    for sum in incremental_sums {
+        if seen_sums.contains(&sum) { return Ok(sum); }
 
-        seen_frequencies.insert(sum);
+        seen_sums.insert(sum);
     }
 
-   sum
+    Err("What happened, how we ended up here?")
 }
 
 fn resulting_frequency(lines: std::str::Lines) -> i32 {
@@ -63,9 +66,9 @@ mod tests {
 
     #[test]
     fn test_first_duplicate_frequency() {
-        assert_eq!(first_duplicate_frequency(String::from("+1\n-1").lines()), 0);
-        assert_eq!(first_duplicate_frequency(String::from("+3\n+3\n+4\n-2\n-4").lines()), 10);
-        assert_eq!(first_duplicate_frequency(String::from("-6\n+3\n+8\n+5\n-6").lines()), 5);
-        assert_eq!(first_duplicate_frequency(String::from("+7\n+7\n-2\n-7\n-4").lines()), 14);
+        assert_eq!(first_duplicate_frequency(String::from("+1\n-1").lines()), Ok(0));
+        assert_eq!(first_duplicate_frequency(String::from("+3\n+3\n+4\n-2\n-4").lines()), Ok(10));
+        assert_eq!(first_duplicate_frequency(String::from("-6\n+3\n+8\n+5\n-6").lines()), Ok(5));
+        assert_eq!(first_duplicate_frequency(String::from("+7\n+7\n-2\n-7\n-4").lines()), Ok(14));
     }
 }
