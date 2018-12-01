@@ -16,7 +16,7 @@ fn main() {
     println!("First duplicate frequency: {}", first_duplicate_frequency(buffer.lines()).expect(""));
 }
 
-fn first_duplicate_frequency(lines: std::str::Lines) -> Result<i32, &'static str> {
+fn first_duplicate_frequency(lines: std::str::Lines) -> Option<i32> {
     // create a infinite list with incremental sums:
     let incremental_sums = lines.map(parse_signed_string)
         .cycle()
@@ -30,12 +30,12 @@ fn first_duplicate_frequency(lines: std::str::Lines) -> Result<i32, &'static str
     seen_sums.insert(0);
 
     for sum in incremental_sums {
-        if seen_sums.contains(&sum) { return Ok(sum); }
+        if seen_sums.contains(&sum) { return Some(sum); }
 
         seen_sums.insert(sum);
     }
 
-    Err("What happened, how we ended up here?")
+    None
 }
 
 fn resulting_frequency(lines: std::str::Lines) -> i32 {
@@ -66,9 +66,9 @@ mod tests {
 
     #[test]
     fn test_first_duplicate_frequency() {
-        assert_eq!(first_duplicate_frequency(String::from("+1\n-1").lines()), Ok(0));
-        assert_eq!(first_duplicate_frequency(String::from("+3\n+3\n+4\n-2\n-4").lines()), Ok(10));
-        assert_eq!(first_duplicate_frequency(String::from("-6\n+3\n+8\n+5\n-6").lines()), Ok(5));
-        assert_eq!(first_duplicate_frequency(String::from("+7\n+7\n-2\n-7\n-4").lines()), Ok(14));
+        assert_eq!(first_duplicate_frequency(String::from("+1\n-1").lines()), Some(0));
+        assert_eq!(first_duplicate_frequency(String::from("+3\n+3\n+4\n-2\n-4").lines()), Some(10));
+        assert_eq!(first_duplicate_frequency(String::from("-6\n+3\n+8\n+5\n-6").lines()), Some(5));
+        assert_eq!(first_duplicate_frequency(String::from("+7\n+7\n-2\n-7\n-4").lines()), Some(14));
     }
 }
