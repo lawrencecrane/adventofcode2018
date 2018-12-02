@@ -2,7 +2,7 @@ extern crate itertools;
 
 use std::fs::File;
 use std::io::prelude::*;
-use itertools::Itertools;
+use std::collections::HashSet;
 
 fn main() {
     let mut f = File::open("data/day_02_input")
@@ -17,35 +17,29 @@ fn main() {
 }
 
 fn correct_box_id(lines: std::str::Lines) -> Option<String> {
-    let all_combinations = lines.combinations(2);
+    let mut seen_one_char_masked_ids = HashSet::new();
 
-    for combination in all_combinations {
-        if edit_distance(combination[0], combination[1]) == Some(1) {
-            return Some(deduce_id(combination[0], combination[1]));
+    let masked_ids = lines.flat_map(generate_one_char_masked_ids);
+
+    for masked_id in masked_ids {
+        if seen_one_char_masked_ids.contains(&masked_id) {
+            return Some(masked_id.replace("_", ""));
         }
+
+        seen_one_char_masked_ids.insert(masked_id);
     }
 
     None
 }
 
-fn deduce_id(x: &str, y: &str) -> String {
-    let id: String = x.chars().zip(y.chars())
-        .filter(|r| r.0 == r.1)
-        .map(|r| r.0)
+fn generate_one_char_masked_ids(id: &str) -> Vec<String> {
+    let masked_ids: Vec<String> = (0..id.len())
+        .map(|i| {
+            format!("{}_{}", &id[0..i], &id[i+1..id.len()])
+        })
         .collect();
 
-    id
-}
-
-fn edit_distance(x: &str, y: &str) -> Option<usize> {
-    if x.len() != y.len() { return None; }
-
-    let distance: usize = x.chars().zip(y.chars())
-        .filter(|r| r.0 != r.1)
-        .map(|_| 1)
-        .sum();
-
-    Some(distance)
+    masked_ids
 }
 
 fn checksum(lines: std::str::Lines) -> usize {
@@ -58,9 +52,9 @@ fn checksum(lines: std::str::Lines) -> usize {
     answer.0 * answer.1
 }
 
-
 fn check_two_and_three_same_chars(x: &str) -> (usize, usize) {
     // Let's assume that the characters are in unicode basic latin charset:
+    // we could also just use hashmap...
     let mut char_counts = [0; 128];
 
     for c in x.chars() {
