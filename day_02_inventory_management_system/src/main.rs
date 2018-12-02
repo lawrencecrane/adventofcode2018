@@ -1,5 +1,8 @@
+extern crate itertools;
+
 use std::fs::File;
 use std::io::prelude::*;
+use itertools::Itertools;
 
 fn main() {
     let mut f = File::open("data/day_02_input")
@@ -10,6 +13,39 @@ fn main() {
         .expect("Something went wrong reading the file");
 
     println!("The checksum is {}", checksum(buffer.lines()));
+    println!("The correct box id is {}", correct_box_id(buffer.lines()).expect(""));
+}
+
+fn correct_box_id(lines: std::str::Lines) -> Option<String> {
+    let all_combinations = lines.combinations(2);
+
+    for combination in all_combinations {
+        if edit_distance(combination[0], combination[1]) == Some(1) {
+            return Some(deduce_id(combination[0], combination[1]));
+        }
+    }
+
+    None
+}
+
+fn deduce_id(x: &str, y: &str) -> String {
+    let id: String = x.chars().zip(y.chars())
+        .filter(|r| r.0 == r.1)
+        .map(|r| r.0)
+        .collect();
+
+    id
+}
+
+fn edit_distance(x: &str, y: &str) -> Option<usize> {
+    if x.len() != y.len() { return None; }
+
+    let distance: usize = x.chars().zip(y.chars())
+        .filter(|r| r.0 != r.1)
+        .map(|_| 1)
+        .sum();
+
+    Some(distance)
 }
 
 fn checksum(lines: std::str::Lines) -> usize {
@@ -21,6 +57,7 @@ fn checksum(lines: std::str::Lines) -> usize {
 
     answer.0 * answer.1
 }
+
 
 fn check_two_and_three_same_chars(x: &str) -> (usize, usize) {
     // Let's assume that the characters are in unicode basic latin charset:
@@ -52,5 +89,12 @@ mod tests {
         assert_eq!(checksum(
             String::from("abcdef\nbababc\nabbcde\nabcccd\naabcdd\nabcdee\nababab").lines()),
                    12);
+    }
+
+    #[test]
+    fn test_correct_box_id() {
+        assert_eq!(correct_box_id(
+            String::from("abcde\nfghij\nklmno\npqrst\nfguij\naxcye\nwvxyz").lines()),
+                   Some(String::from("fgij")));
     }
 }
