@@ -1,1 +1,0 @@
-/Users/lauri.kurki/siili_/adventofcode2018/day_02_inventory_management_system/target/debug/day_02_inventory_management_system.dSYM: /Users/lauri.kurki/siili_/adventofcode2018/day_02_inventory_management_system/src/main.rs
