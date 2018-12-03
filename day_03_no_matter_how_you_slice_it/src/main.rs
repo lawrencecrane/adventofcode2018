@@ -1,6 +1,10 @@
+extern crate itertools;
+
 use std::fs::File;
 use std::io::prelude::*;
 use std::collections::HashSet;
+use std::collections::HashMap;
+use itertools::Itertools;
 
 fn main() {
     let mut f = File::open("data/day_03_input")
@@ -10,8 +14,10 @@ fn main() {
     f.read_to_string(&mut buffer)
         .expect("Something went wrong reading the file");
 
-    println!("Overlapping square inches: {}", draw_canvas(&buffer));
-    println!("Intact id: {}", get_intact_id(&buffer));
+    let answer = populate_canvas(&buffer);
+
+    println!("Overlapping square inches: {}", answer.0);
+    println!("Intact id: {}", answer.1);
 }
 
 #[derive(Debug, PartialEq)]
@@ -23,61 +29,43 @@ struct Claim {
     height: usize
 }
 
-fn get_intact_id(buffer: &String) -> usize {
-    // this could be created by scanning through the input and finding the smallest and biggest values:
-    let canvas: Vec<Vec<Option<usize>>> = vec![vec![None; 5000]; 5000];
-
-    let mut intact_ids = buffer.lines()
+fn populate_canvas(buffer: &str) -> (usize, usize) {
+    let (canvas, mut intact_id) = buffer.lines()
         .map(parse_claim)
-        .fold((canvas, HashSet::new()), |acc, x| draw_square_ids(acc.0, acc.1, x) );
+        .fold((HashMap::new(), HashSet::new()),
+              |acc, sqr| add_square(acc.0, acc.1, sqr));
 
-    let intact_ids: Vec<usize> = intact_ids.1.drain().collect();
-    assert!(intact_ids.len() == 1);
+    let intact_id: Vec<usize> = intact_id.drain().collect();
+    assert!(intact_id.len() == 1);
 
-    intact_ids[0]
-}
-
-fn draw_square_ids(mut canvas: Vec<Vec<Option<usize>>>, mut intact_ids: HashSet<usize>, square: Claim) -> (Vec<Vec<Option<usize>>>, HashSet<usize>) {
-    intact_ids.insert(square.id);
-
-    for i in square.top..square.top + square.height {
-        for j in square.left..square.left + square.width {
-            // if first, draw id:
-            if canvas[i][j] == None { canvas[i][j] = Some(square.id); }
-            // else mask it:
-            else {
-                intact_ids.remove(&canvas[i][j].expect(""));
-                intact_ids.remove(&square.id);
-                canvas[i][j] = Some(0);
-            }
-        }
-    }
-
-    (canvas, intact_ids)
-}
-
-fn draw_canvas(buffer: &String) -> usize {
-    // this could be created by scanning through the input and finding the smallest and biggest values:
-    let canvas = vec![vec![0; 5000]; 5000];
-    let overlapping_units = buffer.lines()
-        .map(parse_claim)
-        .fold(canvas, draw_square)
-        .iter()
-        .flatten()
-        .filter(|&&x| x > 1)
+    let overlapping_units = canvas.values()
+        .filter(|&&x| x == 0)
         .count();
 
-    overlapping_units
+    (overlapping_units, intact_id[0])
 }
 
-fn draw_square(mut canvas: Vec<Vec<usize>>, square: Claim) -> Vec<Vec<usize>> {
-    for i in square.top..square.top + square.height {
-        for j in square.left..square.left + square.width {
-            canvas[i][j] = canvas[i][j] + 1;
-        }
-    }
+fn add_square(canvas: HashMap<(usize, usize), usize>,
+              mut intact_ids: HashSet<usize>,
+              square: Claim) ->(HashMap<(usize, usize), usize>, HashSet<usize>) {
 
-    canvas
+    intact_ids.insert(square.id);
+
+    (square.top..square.top + square.height)
+        .cartesian_product(square.left..square.left + square.width)
+        .fold((canvas, intact_ids), |(mut can, mut ii), point| {
+            can.entry(point)
+            // if the entry already exists:
+            .and_modify(|old_id| {
+              ii.remove(&*old_id);
+              ii.remove(&square.id);
+              *old_id = 0;
+            })
+            // if the entry doesn't exist:
+            .or_insert(square.id);
+
+            (can, ii)
+        })
 }
 
 fn parse_claim(row: &str) -> Claim {
@@ -122,12 +110,9 @@ mod tests {
     }
 
     #[test]
-    fn test_draw_canvas() {
-        assert_eq!(draw_canvas(&String::from("#1 @ 1,3: 4x4\n#2 @ 3,1: 4x4\n#3 @ 5,5: 2x2")), 4);
-    }
-
-    #[test]
-    fn test_get_intact_id() {
-        assert_eq!(get_intact_id(&String::from("#1 @ 1,3: 4x4\n#2 @ 3,1: 4x4\n#3 @ 5,5: 2x2")), 3);
+    fn test_populate_canvas() {
+        let answer = populate_canvas(&String::from("#1 @ 1,3: 4x4\n#2 @ 3,1: 4x4\n#3 @ 5,5: 2x2"));
+        assert_eq!(answer.0, 4);
+        assert_eq!(answer.1, 3);
     }
 }
