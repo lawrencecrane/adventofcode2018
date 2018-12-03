@@ -1,5 +1,3 @@
-extern crate itertools;
-
 use std::fs::File;
 use std::io::prelude::*;
 use std::collections::HashSet;
