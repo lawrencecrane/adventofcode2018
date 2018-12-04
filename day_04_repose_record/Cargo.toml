@@ -1,0 +1,9 @@
+[package]
+name = "day_04_repose_record"
+version = "0.1.0"
+authors = ["Lauri Kurki <lauri.kurki@siili.com>"]
+
+[dependencies]
+chrono = "0.4"
+regex = "1"
+itertools = "0.7"
