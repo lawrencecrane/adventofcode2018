@@ -19,13 +19,41 @@ fn main() {
 
 
     let sleepiest = sleepiest_guard(buffer.lines());
-    println!("Sleepiest: {}", sleepiest.0 * sleepiest.1);
+    println!("Sleepiest guard: {}", sleepiest.0 * sleepiest.1);
+
+    let sleepiest = most_frequent_sleeper(buffer.lines());
+    println!("Most frequent sleeper: {}", sleepiest.0 * sleepiest.1);
+}
+
+fn most_frequent_sleeper(lines: std::str::Lines) -> (usize, usize) {
+    let mut logs = generate_sleepmap(lines);
+
+    let (sleepiest_id, sleepiest_minute, _) = logs.drain()
+        .fold((0, 0, 0), |(best_guard_id, best_minute, best_count), (guard_id, minutes)| {
+            let (minute, count) = minutes.iter()
+                .enumerate()
+                .fold((0, 0), |(pos, val), (i, x)| {
+                    if x > &val {
+                        (i, *x)
+                    } else {
+                        (pos, val)
+                    }
+                });
+
+            if count > best_count {
+                (guard_id, minute, count)
+            } else {
+                (best_guard_id, best_minute, best_count)
+            }
+        });
+
+    (sleepiest_id, sleepiest_minute)
 }
 
 fn sleepiest_guard(lines: std::str::Lines) -> (usize, usize) {
     let logs = generate_sleepmap(lines);
 
-    let (sleepiest_id, _) = logs.map.iter()
+    let (sleepiest_id, _) = logs.iter()
         .fold((0, 0), |(best_guard_id, best_sum), (guard_id, values)| {
             let sum = values.iter().sum();
 
@@ -36,7 +64,7 @@ fn sleepiest_guard(lines: std::str::Lines) -> (usize, usize) {
             }
         });
 
-    let (sleepiest_minute, _) = logs.map.get(&sleepiest_id)
+    let (sleepiest_minute, _) = logs.get(&sleepiest_id)
         .expect("")
         .iter()
         .enumerate()
@@ -51,7 +79,7 @@ fn sleepiest_guard(lines: std::str::Lines) -> (usize, usize) {
     (sleepiest_id, sleepiest_minute)
 }
 
-fn generate_sleepmap(lines: std::str::Lines) -> SleepMap {
+fn generate_sleepmap(lines: std::str::Lines) -> HashMap<usize, [usize; 60]> {
     let logs: SleepMap = lines
         .map(string_to_duty_log)
         .sorted_by(|a, b| a.timestamp.cmp(&b.timestamp))
@@ -82,7 +110,7 @@ fn generate_sleepmap(lines: std::str::Lines) -> SleepMap {
             }
         });
 
-    logs
+    logs.map
 }
 
 #[derive(Debug, PartialEq)]
@@ -167,7 +195,9 @@ mod tests {
         let test_logs = "[1518-11-01 00:00] Guard #10 begins shift\n[1518-11-01 00:05] falls asleep\n[1518-11-01 00:25] wakes up\n[1518-11-01 00:30] falls asleep\n[1518-11-01 00:55] wakes up\n[1518-11-01 23:58] Guard #99 begins shift\n[1518-11-02 00:40] falls asleep\n[1518-11-02 00:50] wakes up\n[1518-11-03 00:05] Guard #10 begins shift\n[1518-11-03 00:24] falls asleep\n[1518-11-03 00:29] wakes up\n[1518-11-04 00:02] Guard #99 begins shift\n[1518-11-04 00:36] falls asleep\n[1518-11-04 00:46] wakes up\n[1518-11-05 00:03] Guard #99 begins shift\n[1518-11-05 00:45] falls asleep\n[1518-11-05 00:55] wakes up";
 
         let sleepiest = sleepiest_guard(String::from(test_logs).lines());
-        println!("{:?}", sleepiest);
         assert_eq!(sleepiest.0 * sleepiest.1, 240);
+
+        let sleepiest = most_frequent_sleeper(String::from(test_logs).lines());
+        assert_eq!(sleepiest.0 * sleepiest.1, 4455);
     }
 }
