@@ -27,11 +27,12 @@ fn shortest_polymer(polymer: &str) -> String {
         .collect();
 
     let reduced_best = alphabet.iter()
-        .fold(None, |best: Option<Vec<char>>, &letter| {
-            let reduced = polymer.chars()
+        .map(|&letter| {
+            polymer.chars()
                 .filter(|c| c.to_ascii_lowercase() != letter)
-                .fold(Vec::new(), polymer_reducer);
-
+                .fold(Vec::new(), polymer_reducer)
+        })
+        .fold(None, |best: Option<Vec<char>>, reduced| {
             match best {
                 Some(v) => {
                     if reduced.len() < v.len() { Some(reduced) }
