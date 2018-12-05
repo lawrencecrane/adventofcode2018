@@ -1,0 +1,6 @@
+[package]
+name = "day_05_alchemical_reduction"
+version = "0.1.0"
+authors = ["Lauri Kurki <lauri.kurki@siili.com>"]
+
+[dependencies]
