@@ -17,13 +17,14 @@ fn main() {
     // println!("Reducer works? {}", reduced_polymer == rereduced_polymer);
     println!("Reduced polymer units: {}", reduced_polymer.len());
 
-
     let shortest_reduced_polymer = shortest_polymer(&buffer);
     println!("Shortest reduced polymer units: {}", shortest_reduced_polymer.len());
 }
 
 fn shortest_polymer(polymer: &str) -> String {
-    let alphabet: HashSet<char> = polymer.chars().map(|x| x.to_ascii_lowercase()).collect();
+    let alphabet: HashSet<char> = polymer.chars()
+        .map(|x| x.to_ascii_lowercase())
+        .collect();
 
     let reduced_best = alphabet.iter()
         .fold(None, |best: Option<Vec<char>>, &letter| {

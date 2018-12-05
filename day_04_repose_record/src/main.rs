@@ -80,37 +80,39 @@ fn sleepiest_guard(lines: std::str::Lines) -> (usize, usize) {
 }
 
 fn generate_sleepmap(lines: std::str::Lines) -> HashMap<usize, [usize; 60]> {
-    let logs: SleepMap = lines
+    let (logs, _, _) = lines
         .map(string_to_duty_log)
         .sorted_by(|a, b| a.timestamp.cmp(&b.timestamp))
         .iter()
-        .fold(SleepMap::new(), |mut map, log| {
+        .fold((HashMap::new(), None, None),
+              |(mut map, last_guard_id, last_fall_asleep_minute): (HashMap<usize, [usize; 60]>, Option<usize>, Option<usize>),
+              log| {
             match log.log_type {
                 LogType::ShiftBegins => {
                     let key = log.guard_id.expect("");
-                    map.map.entry(key).or_insert([0; 60]);
-                    map.last_key = Some(key);
-                    map
+                    map.entry(key).or_insert([0; 60]);
+
+                    (map, Some(key), None)
                 },
                 LogType::FallsAsleep => {
-                    map.last_minute = Some(log.timestamp.minute() as usize);
-                    map
+                    (map, last_guard_id, Some(log.timestamp.minute() as usize))
                 },
                 LogType::WakesUp => {
-                    let last = map.last_minute.unwrap_or_default();
+                    let fall_asleep_min = last_fall_asleep_minute.unwrap_or_default();
 
-                    map.map.entry(map.last_key.expect(""))
+                    map.entry(last_guard_id.expect(""))
                         .and_modify(|v| {
-                            for minute in last..(log.timestamp.minute() as usize) {
+                            for minute in fall_asleep_min..(log.timestamp.minute() as usize) {
                                 v[minute] += 1;
                             }
                         });
-                    map
+
+                    (map, last_guard_id, None)
                 }
             }
         });
 
-    logs.map
+    logs
 }
 
 #[derive(Debug, PartialEq)]
@@ -136,28 +138,11 @@ struct DutyLog {
     timestamp: NaiveDateTime
 }
 
-struct SleepMap {
-    last_key: Option<usize>,
-    last_minute: Option<usize>,
-    map: HashMap<usize, [usize; 60]>
-}
-
-impl SleepMap {
-    fn new() -> SleepMap {
-        SleepMap {
-            last_key: None,
-            last_minute: None,
-            map: HashMap::new()
-        }
-    }
-}
-
 fn string_to_duty_log(row: &str) -> DutyLog {
     let re = Regex::new(r"\[([0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+)\] Guard #([0-9]+) ([a-zA-Z]+.*)|\[([0-9]+-[0-9]+-[0-9]+ [0-9]+:[0-9]+)\] ([a-zA-Z]+.*)")
         .unwrap();
 
     let values = re.captures(row).unwrap();
-
     let guard_id = values.get(2).map_or(None, |m| -> Option<usize> { Some(m.as_str().parse().expect("")) });
 
     let (timestamp, log_type) = if guard_id == None {
