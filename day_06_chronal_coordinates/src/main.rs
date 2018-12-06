@@ -16,12 +16,29 @@ fn main() {
         .expect("Something went wrong reading the file");
 
     let coordinates = parse_to_points(buffer.lines());
-    let largest_area = largest_finite_area(coordinates);
+
+    let largest_area = largest_finite_area(&coordinates);
+    let area_with_distance_10000 = area_with_total_distance(&coordinates, 10000);
 
     println!("Largest finite area: {}", largest_area);
+    println!("Area with total distance under 10000: {}", area_with_distance_10000);
 }
 
-fn largest_finite_area(points: Vec<Point>) -> usize {
+fn area_with_total_distance(points: &Vec<Point>, upperlimit: usize) -> usize {
+    let (min, max) = find_min_and_max_point(&points);
+    let transformed_points = transform_points(&points, min);
+
+    let space = map_total_distance(&transformed_points,
+                                   1 + max.x as usize,
+                                   1 + max.y as usize);
+
+    space.iter()
+        .flat_map(|x| x)
+        .filter(|&dist| dist < &upperlimit)
+        .count()
+}
+
+fn largest_finite_area(points: &Vec<Point>) -> usize {
     let (min, max) = find_min_and_max_point(&points);
     let transformed_points = transform_points(&points, min);
 
@@ -95,6 +112,23 @@ fn map_closest_points(points: &Vec<Point>, rows: usize, cols: usize) -> Vec<Vec<
     space
 }
 
+fn map_total_distance(points: &Vec<Point>, rows: usize, cols: usize) -> Vec<Vec<usize>> {
+    let space = (0..cols).cartesian_product(0..rows)
+        .map(|(i, j)| {
+            Point {
+                id: 0,
+                x: i as isize,
+                y: j as isize
+            }
+        })
+        .fold(vec![vec![0; cols]; rows], |mut space, a| {
+            space[a.y as usize][a.x as usize] = total_distance_to_all(&a, points);
+            space
+        });
+
+    space
+}
+
 fn transform_points(points: &Vec<Point>, new_origin: Point) -> Vec<Point> {
     let transformed: Vec<Point> = points.iter()
         .map(|a| {
@@ -133,6 +167,14 @@ fn find_min_and_max_point(points: &Vec<Point>) -> (Point, Point) {
         }).expect("");
 
     (min, max)
+}
+
+fn total_distance_to_all(a: &Point, points: &Vec<Point>) -> usize {
+    let total = points.iter()
+        .map(|b| taxicab_distance(a, b) as usize)
+        .sum();
+
+    total
 }
 
 fn closest_point(a: &Point, points: &Vec<Point>) -> Option<usize> {
@@ -195,6 +237,15 @@ mod tests {
             String::from("1, 1\n1, 6\n8, 3\n3, 4\n5, 5\n8, 9").lines()
         );
 
-        assert_eq!(largest_finite_area(input), 17);
+        assert_eq!(largest_finite_area(&input), 17);
+    }
+
+    #[test]
+    fn test_area_with_total_distance() {
+        let input = parse_to_points(
+            String::from("1, 1\n1, 6\n8, 3\n3, 4\n5, 5\n8, 9").lines()
+        );
+
+        assert_eq!(area_with_total_distance(&input, 32), 16);
     }
 }
