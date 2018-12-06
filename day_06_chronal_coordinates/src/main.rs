@@ -171,7 +171,7 @@ fn find_min_and_max_point(points: &Vec<Point>) -> (Point, Point) {
 
 fn total_distance_to_all(a: &Point, points: &Vec<Point>) -> usize {
     let total = points.iter()
-        .map(|b| taxicab_distance(a, b) as usize)
+        .map(|b| manhattan_distance(a, b) as usize)
         .sum();
 
     total
@@ -180,7 +180,7 @@ fn total_distance_to_all(a: &Point, points: &Vec<Point>) -> usize {
 fn closest_point(a: &Point, points: &Vec<Point>) -> Option<usize> {
     let (id, _, count) = points.iter()
         .fold(None, |closest, b| {
-            let distance = taxicab_distance(a, b);
+            let distance = manhattan_distance(a, b);
 
             match closest {
                 Some ((_, dist, _)) if distance < dist => Some((b.id, distance, 1)),
@@ -196,7 +196,7 @@ fn closest_point(a: &Point, points: &Vec<Point>) -> Option<usize> {
     }
 }
 
-fn taxicab_distance(a: &Point, b: &Point) -> isize {
+fn manhattan_distance(a: &Point, b: &Point) -> isize {
     (b.x - a.x).abs() + (b.y - a.y).abs()
 }
 
