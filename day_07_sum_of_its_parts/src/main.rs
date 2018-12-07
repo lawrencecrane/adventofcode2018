@@ -157,9 +157,9 @@ fn create_depnet(lines: std::str::Lines) -> HashMap<char, HashSet<char>> {
                     v.insert(dependee);
                 })
                 .or_insert({
-                    let mut set = HashSet::new();
-                    set.insert(dependee);
-                    set
+                    let mut dependencies = HashSet::new();
+                    dependencies.insert(dependee);
+                    dependencies
                 });
 
             map
