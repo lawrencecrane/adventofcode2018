@@ -31,25 +31,21 @@ struct Tick {
 fn time_to_complete_all_steps(lines: std::str::Lines, workers: usize, time_penalty: usize) -> usize {
     let network = create_network(lines);
 
-    let (result, _) = complete_all_parallel((Tick {
+    complete_all_parallel(Tick {
         total_time: 0,
         time_penalty: time_penalty,
         workers: vec![(0, 0); workers],
         nworkers: workers
-    }, network));
-
-    result.total_time
+    }, network)
 }
 
-fn complete_all_parallel(xs: (Tick, (Vec<Vec<usize>>, HashSet<usize>))) -> (Tick, (Vec<Vec<usize>>, HashSet<usize>)) {
-    let (mut x, mut network) = xs;
-
+fn complete_all_parallel(mut x: Tick, mut network: (Vec<Vec<usize>>, HashSet<usize>)) -> usize {
     let available: VecDeque<usize> = find_n_available_instructions(&network.0, &network.1, x.nworkers);
     // Give idle workers a new task if there is any available:
     let workers = assign_tasks(&x, available_tasks(available, &x));
     let min_completion_time = min_completion_time(&workers);
 
-    let result = match min_completion_time {
+    match min_completion_time {
         Some(min_time) => {
             // Substract the shortest completion time from tasks,
             // if any tasks finished, remove them:
@@ -76,14 +72,12 @@ fn complete_all_parallel(xs: (Tick, (Vec<Vec<usize>>, HashSet<usize>))) -> (Tick
             x.total_time += min_time;
             x.workers = workers;
 
-            complete_all_parallel((x, network))
+            complete_all_parallel(x, network)
         },
         None => {
-            (x, network)
+            x.total_time
         }
-    };
-
-    result
+    }
 }
 
 fn min_completion_time(workers: &Vec<(usize, usize)>) -> Option<usize> {
@@ -210,29 +204,21 @@ fn parse_line_to_tuple(line: &str) -> (char, char) {
 mod tests {
     use super::*;
 
+    const INPUT: &str = "Step C must be finished before step A can begin.\n\
+                         Step C must be finished before step F can begin.\n\
+                         Step A must be finished before step B can begin.\n\
+                         Step A must be finished before step D can begin.\n\
+                         Step B must be finished before step E can begin.\n\
+                         Step D must be finished before step E can begin.\n\
+                         Step F must be finished before step E can begin.";
+
     #[test]
     fn test_instruction_order() {
-        let input = String::from("Step C must be finished before step A can begin.\n\
-                                  Step C must be finished before step F can begin.\n\
-                                  Step A must be finished before step B can begin.\n\
-                                  Step A must be finished before step D can begin.\n\
-                                  Step B must be finished before step E can begin.\n\
-                                  Step D must be finished before step E can begin.\n\
-                                  Step F must be finished before step E can begin.");
-
-        assert_eq!(instruction_order(input.lines()), String::from("CABDFE"));
+        assert_eq!(instruction_order(String::from(INPUT).lines()), String::from("CABDFE"));
     }
 
     #[test]
     fn test_time_to_complete_all_steps() {
-        let input = String::from("Step C must be finished before step A can begin.\n\
-                                  Step C must be finished before step F can begin.\n\
-                                  Step A must be finished before step B can begin.\n\
-                                  Step A must be finished before step D can begin.\n\
-                                  Step B must be finished before step E can begin.\n\
-                                  Step D must be finished before step E can begin.\n\
-                                  Step F must be finished before step E can begin.");
-
-        assert_eq!(time_to_complete_all_steps(input.lines(), 2, 0), 15);
+        assert_eq!(time_to_complete_all_steps(String::from(INPUT).lines(), 2, 0), 15);
     }
 }
