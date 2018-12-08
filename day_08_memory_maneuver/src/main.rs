@@ -18,6 +18,7 @@ fn main() {
 
     let tree = parse_string_to_vec(&buffer);
     let (root_value, _) = find_root_node_value(tree);
+
     println!("The value of root node: {}", root_value);
 }
 
@@ -39,7 +40,7 @@ fn find_root_node_value(mut tree: VecDeque<usize>) -> (usize, VecDeque<usize>) {
                     (metasums, t)
                 });
 
-            let (mut values, new_tree) = take_n_metavalues(new_tree, nmeta);
+            let (values, new_tree) = take_n_metavalues(new_tree, nmeta);
 
             let value = values.iter()
                 .filter(|x| x > &&0)
