@@ -16,7 +16,6 @@ fn main() {
         .map(parse_line_to_tuple)
         .collect();
 
-
     let time = find_most_compact_space_time(vector_space.clone(), 100);
 
     println!("Time: {}", time);
@@ -80,6 +79,7 @@ fn is_diverging(compactness_vector: &Vec<(isize, f32)>, nlookback: usize) -> boo
 }
 
 fn estimate_space_compactness(vector_space: &Vec<Vector>) -> (isize, f32) {
+    // If the vector were kept sorted, it could make this more efficient
     let (min, max) = find_min_and_max(vector_space);
 
     let y_compactness = max_same_y_coordinate_count(vector_space) as f32
