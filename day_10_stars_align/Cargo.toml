@@ -1,0 +1,7 @@
+[package]
+name = "day_10_stars_align"
+version = "0.1.0"
+authors = ["Lauri Kurki <lauri.kurki@siili.com>"]
+
+[dependencies]
+regex = "1"
