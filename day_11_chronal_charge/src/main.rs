@@ -5,42 +5,75 @@ use itertools::Itertools;
 fn main() {
     let grid = create_fuel_grid(2866);
     println!("(x,y) of max 3 x 3 grid: {:?}", find_max_3x3_subgrid(&grid));
- 
     println!("(x,y,n) of max n x n grid: {:?}", find_max_anysize_subgrid(&grid));
 }
 
-fn find_max_anysize_subgrid(grid: &Vec<Vec<isize>>) -> (usize, usize, usize) {
-    let (mut maxsum, mut maxx, mut maxy, mut maxn) = (0, 0, 0, 0);
+fn generate_summed_area_table(grid: &Vec<Vec<isize>>) -> Vec<Vec<isize>> {
+    let mut sum_area = vec![vec![0; grid.len()]; grid.len()];
 
-    // bruteforce way...
-    for n in 1..301 {
-        let (x, y, sum) = find_max_subgrid(grid, n);
-        println!("({}, {}, {}): {}", x, y, n, sum);
-
-        if sum == 0 { break }
-
-        match sum > maxsum {
-            true => {
-                maxsum = sum;
-                maxx = x;
-                maxy = y;
-                maxn = n;},
-            _ => {}
-        };
+    for (y, values) in grid.iter().enumerate() {
+        for (x, value) in values.iter().enumerate() {
+            sum_area[y][x] = match (x > 0, y > 0) {
+                (true, true)   => value + sum_area[y - 1][x] + sum_area[y][x - 1] - sum_area[y - 1][x - 1],
+                (true, false)  => value + sum_area[y][x - 1],
+                (false, true)  => value + sum_area[y - 1][x],
+                (false, false) => *value
+            };
+        }
     }
 
-    (maxx + 1, maxy + 1, maxn)
+    sum_area
+}
+
+fn sum_from_summed_area_table(sum_area: &Vec<Vec<isize>>, x: usize, y: usize, n: usize) -> isize {
+    match (x > 0, y > 0) {
+        (true, true)   => {
+            let (x0, y0) = (x - 1, y - 1);
+            let (x1, y1) = (x0 + n, y0 + n);
+
+            sum_area[y1][x1] + sum_area[y0][x0] - sum_area[y0][x1] - sum_area[y1][x0]
+        },
+        (true, false)  => {
+            let x0 = x - 1;
+            let (x1, y1) = (x0 + n, y + n - 1);
+
+            sum_area[y1][x1] - sum_area[y1][x0]
+        },
+        (false, true)  => {
+            let y0 = y - 1;
+            let (x1, y1) = (x + n - 1, y0 + n);
+
+            sum_area[y1][x1] - sum_area[y0][x1]
+        },
+        (false, false) => sum_area[y + n - 1][x + n - 1]
+    }
+}
+
+fn find_max_anysize_subgrid(grid: &Vec<Vec<isize>>) -> (usize, usize, usize) {
+    let sum_area = generate_summed_area_table(grid);
+
+    let (_, maxx, maxy, maxn) = (1..301)
+        .fold((0, 0, 0, 0), |(maxsum, maxx, maxy, maxn), n| {
+            let (x, y, sum) = find_max_subgrid(&sum_area, n, &sum_from_summed_area_table);
+
+            match sum > maxsum {
+                true => (sum, x, y, n),
+                false => (maxsum, maxx, maxy, maxn)
+            }
+        });
+
+    (maxx, maxy, maxn)
 }
 
 fn find_max_3x3_subgrid(grid: &Vec<Vec<isize>>) -> (usize, usize) {
-    let (x, y, _) = find_max_subgrid(grid, 3);
+    let (x, y, _) = find_max_subgrid(grid, 3, &total_power_in_subgrid);
     (x, y)
 }
 
-fn find_max_subgrid(grid: &Vec<Vec<isize>>, n: usize) -> (usize, usize, isize) {
+fn find_max_subgrid(grid: &Vec<Vec<isize>>, n: usize, sum_subgrid: &Fn(&Vec<Vec<isize>>, usize, usize, usize) -> isize) -> (usize, usize, isize) {
     let (maxsum, x, y) = (0..300 - n).cartesian_product(0..300 - n)
         .fold((0, 0, 0), |(maxsum, maxx, maxy), (x, y)| {
-            let sum = total_power_in_subgrid(&grid, x, y, n);
+            let sum = sum_subgrid(&grid, x, y, n);
             match sum > maxsum {
                 true => (sum, x, y),
                 false => (maxsum, maxx, maxy)
