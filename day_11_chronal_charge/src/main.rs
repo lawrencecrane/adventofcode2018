@@ -26,26 +26,14 @@ fn generate_summed_area_table(grid: &Vec<Vec<isize>>) -> Vec<Vec<isize>> {
 }
 
 fn sum_from_summed_area_table(sum_area: &Vec<Vec<isize>>, x: usize, y: usize, n: usize) -> isize {
+    let (x0, y0) = (x.checked_sub(1).unwrap_or(0), y.checked_sub(1).unwrap_or(0));
+    let (x1, y1) = (x + n - 1, y + n - 1);
+
     match (x > 0, y > 0) {
-        (true, true)   => {
-            let (x0, y0) = (x - 1, y - 1);
-            let (x1, y1) = (x0 + n, y0 + n);
-
-            sum_area[y1][x1] + sum_area[y0][x0] - sum_area[y0][x1] - sum_area[y1][x0]
-        },
-        (true, false)  => {
-            let x0 = x - 1;
-            let (x1, y1) = (x0 + n, y + n - 1);
-
-            sum_area[y1][x1] - sum_area[y1][x0]
-        },
-        (false, true)  => {
-            let y0 = y - 1;
-            let (x1, y1) = (x + n - 1, y0 + n);
-
-            sum_area[y1][x1] - sum_area[y0][x1]
-        },
-        (false, false) => sum_area[y + n - 1][x + n - 1]
+        (true, true)   => sum_area[y1][x1] + sum_area[y0][x0] - sum_area[y0][x1] - sum_area[y1][x0],
+        (true, false)  => sum_area[y1][x1] - sum_area[y1][x0],
+        (false, true)  => sum_area[y1][x1] - sum_area[y0][x1],
+        (false, false) => sum_area[y1][x1]
     }
 }
 
