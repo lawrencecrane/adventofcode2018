@@ -58,7 +58,9 @@ fn find_max_3x3_subgrid(grid: &Vec<Vec<isize>>) -> (usize, usize) {
     (x, y)
 }
 
-fn find_max_subgrid(grid: &Vec<Vec<isize>>, n: usize, sum_subgrid: &Fn(&Vec<Vec<isize>>, usize, usize, usize) -> isize) -> (usize, usize, isize) {
+fn find_max_subgrid(grid: &Vec<Vec<isize>>, n: usize,
+                    sum_subgrid: &Fn(&Vec<Vec<isize>>, usize, usize, usize) -> isize)
+                    -> (usize, usize, isize) {
     let (maxsum, x, y) = (0..300 - n).cartesian_product(0..300 - n)
         .fold((0, 0, 0), |(maxsum, maxx, maxy), (x, y)| {
             let sum = sum_subgrid(&grid, x, y, n);
