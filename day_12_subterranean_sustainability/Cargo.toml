@@ -1,0 +1,8 @@
+[package]
+name = "day_12_subterranean_sustainability"
+version = "0.1.0"
+authors = ["Lauri Kurki <lauri.kurki@siili.com>"]
+
+[dependencies]
+regex = "1"
+itertools = "0.7"
