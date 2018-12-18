@@ -1,0 +1,7 @@
+[package]
+name = "day_18_settlers_of_the_north_pole"
+version = "0.1.0"
+authors = ["Lauri Kurki <lauri.kurki@siili.com>"]
+
+[dependencies]
+itertools = "0.7"
